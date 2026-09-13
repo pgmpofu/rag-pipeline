@@ -28,7 +28,15 @@ def add_documents(documents: list[dict]) -> int:
     collection.upsert(
         ids=[_doc_id(d["source"], d["chunk_index"]) for d in documents],
         documents=[d["text"] for d in documents],
-        metadatas=[{"source": d["source"], "chunk_index": d["chunk_index"]} for d in documents],
+        metadatas=[
+            {
+                "source": d["source"],
+                "chunk_index": d["chunk_index"],
+                "title": d.get("title", ""),
+                "url": d.get("url", ""),
+            }
+            for d in documents
+        ],
     )
     return len(documents)
 
@@ -41,5 +49,21 @@ def query(text: str, top_k: int) -> list[dict]:
     for doc, meta, distance in zip(
         results["documents"][0], results["metadatas"][0], results["distances"][0]
     ):
-        hits.append({"text": doc, "source": meta["source"], "distance": distance})
+        hits.append(
+            {
+                "text": doc,
+                "source": meta["source"],
+                "title": meta.get("title", ""),
+                "url": meta.get("url", ""),
+                "distance": distance,
+            }
+        )
     return hits
+
+
+def count() -> int:
+    return get_collection().count()
+
+
+def reset():
+    chromadb.PersistentClient(path=PERSIST_DIR).delete_collection(COLLECTION_NAME)

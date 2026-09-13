@@ -1,8 +1,12 @@
 # RAG Pipeline
 
-A local retrieval-augmented generation pipeline: ingest documents into a local
-Chroma vector store using local sentence-transformer embeddings, then answer
-questions with Claude grounded in the retrieved context.
+A local retrieval-augmented generation pipeline built over a real corpus: the
+dev.to writing of [@pgmpofu](https://dev.to/pgmpofu) — 26 posts on AppSec, SAST
+tooling, ML-based secrets detection, and RAG design.
+
+Documents are chunked, embedded locally with sentence-transformers, and stored
+in a local Chroma collection. Claude answers questions grounded in the retrieved
+chunks and cites the posts it drew from.
 
 ## Setup
 
@@ -15,7 +19,13 @@ cp .env.example .env  # then fill in ANTHROPIC_API_KEY
 
 ## Usage
 
-Ingest a file or a directory of `.txt`, `.md`, or `.pdf` files:
+Ingest the dev.to corpus:
+
+```bash
+python cli.py ingest-devto pgmpofu
+```
+
+Ingest local `.txt`, `.md`, or `.pdf` files as well:
 
 ```bash
 python cli.py ingest data/
@@ -24,26 +34,40 @@ python cli.py ingest data/
 Ask a question:
 
 ```bash
-python cli.py query "What does this document say about X?"
+python cli.py query "Why did I choose Random Forest over deep learning?"
+```
+
+Clear the collection:
+
+```bash
+python cli.py reset
 ```
 
 ## How it works
 
-1. **Loader** (`rag/loader.py`) reads files and splits them into overlapping
-   chunks on paragraph boundaries.
-2. **Store** (`rag/store.py`) embeds chunks locally with
-   `sentence-transformers/all-MiniLM-L6-v2` and persists them in a local
-   Chroma collection (`chroma_db/`).
-3. **Pipeline** (`rag/pipeline.py`) embeds the question, retrieves the
-   top-k most similar chunks, and asks Claude to answer using only that
-   context, citing sources.
+1. **Sources** — `rag/devto.py` pulls posts from the public dev.to API
+   (`body_markdown`), and `rag/loader.py` reads local files. Both emit the same
+   chunk shape, so the rest of the pipeline doesn't care where text came from.
+2. **Chunking** — splits on paragraph boundaries up to ~800 chars with overlap.
+   dev.to chunks are prefixed with the post title so a standalone chunk stays
+   retrievable by topic even when its body never restates the subject.
+3. **Store** (`rag/store.py`) — embeds chunks locally with
+   `sentence-transformers/all-MiniLM-L6-v2` and upserts them into a persistent
+   Chroma collection (`chroma_db/`). Chunk IDs are derived from
+   source + index, so re-ingesting updates rather than duplicates.
+4. **Pipeline** (`rag/pipeline.py`) — retrieves the top-k chunks and asks Claude
+   to answer using only that context, citing post titles and URLs.
 
-## Swapping components
+## Notes and next steps
 
-- **Vector store**: replace `rag/store.py` with a client for Pinecone,
-  Weaviate, pgvector, etc. — it only needs `add_documents` and `query`.
-- **Embeddings**: swap the `SentenceTransformerEmbeddingFunction` for
-  Voyage AI (Anthropic's recommended embeddings partner) or another provider.
-- **Chunking**: tune `CHUNK_SIZE` / `CHUNK_OVERLAP` in `rag/config.py`, or
-  replace the paragraph-based splitter in `rag/loader.py` with a
-  token-aware one for large-scale ingestion.
+- **Retrieved text is data, not instructions.** The system prompt tells the model
+  to treat context as reference material only. Anything ingested from a remote
+  source should be regarded as untrusted input.
+- **Retrieval currently favours a single post.** For a narrow question that is
+  correct, but comparative questions ("how did my SAST and secrets tools differ?")
+  can have all k slots taken by one article. Per-source diversity or MMR
+  re-ranking would fix this.
+- **Swappable pieces.** The vector store only needs `add_documents` / `query`,
+  so Pinecone, Weaviate, or pgvector can drop in. Embeddings can move to Voyage
+  AI (Anthropic's recommended partner) if you want hosted quality over local
+  cost. Chunk sizing lives in `rag/config.py`.

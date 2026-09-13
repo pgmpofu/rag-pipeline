@@ -48,7 +48,7 @@ def chunk_text(text: str, chunk_size: int = CHUNK_SIZE, overlap: int = CHUNK_OVE
 
 
 def load_and_chunk(source: Path) -> list[dict]:
-    """Returns a list of {"text": str, "source": str, "chunk_index": int} dicts."""
+    """Read local files and split them into chunks ready for indexing."""
     documents = []
     for file_path in discover_files(source):
         text = read_file(file_path)
@@ -56,6 +56,12 @@ def load_and_chunk(source: Path) -> list[dict]:
             continue
         for i, chunk in enumerate(chunk_text(text)):
             documents.append(
-                {"text": chunk, "source": str(file_path), "chunk_index": i}
+                {
+                    "text": chunk,
+                    "source": str(file_path),
+                    "chunk_index": i,
+                    "title": file_path.name,
+                    "url": "",
+                }
             )
     return documents
