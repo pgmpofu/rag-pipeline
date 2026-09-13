@@ -2,6 +2,7 @@ import argparse
 from pathlib import Path
 
 from rag import devto, pipeline, store
+from rag.config import MMR_LAMBDA
 from rag.loader import load_and_chunk
 
 
@@ -19,7 +20,7 @@ def cmd_ingest_devto(args):
 
 
 def cmd_query(args):
-    result = pipeline.answer(args.question, top_k=args.top_k)
+    result = pipeline.answer(args.question, top_k=args.top_k, lambda_mult=args.lambda_mult)
     print(result["answer"])
     print("\nSources:")
     for src in result["sources"]:
@@ -47,6 +48,13 @@ def main():
     query_parser = subparsers.add_parser("query", help="Ask a question")
     query_parser.add_argument("question", help="The question to ask")
     query_parser.add_argument("--top-k", type=int, default=5, help="Number of chunks to retrieve")
+    query_parser.add_argument(
+        "--lambda",
+        dest="lambda_mult",
+        type=float,
+        default=MMR_LAMBDA,
+        help="MMR relevance/diversity tradeoff: 1.0 is pure relevance, lower is more diverse",
+    )
     query_parser.set_defaults(func=cmd_query)
 
     reset_parser = subparsers.add_parser("reset", help="Delete everything in the collection")

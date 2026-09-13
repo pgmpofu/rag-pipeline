@@ -1,7 +1,7 @@
 from anthropic import Anthropic
 
 from . import store
-from .config import ANTHROPIC_API_KEY, CLAUDE_MODEL, TOP_K
+from .config import ANTHROPIC_API_KEY, CLAUDE_MODEL, MMR_LAMBDA, TOP_K
 
 SYSTEM_PROMPT = (
     "You are a helpful assistant that answers questions using only the provided context. "
@@ -27,8 +27,8 @@ def build_prompt(question: str, hits: list[dict]) -> str:
     )
 
 
-def answer(question: str, top_k: int = TOP_K) -> dict:
-    hits = store.query(question, top_k=top_k)
+def answer(question: str, top_k: int = TOP_K, lambda_mult: float = MMR_LAMBDA) -> dict:
+    hits = store.query(question, top_k=top_k, lambda_mult=lambda_mult)
 
     client = Anthropic(api_key=ANTHROPIC_API_KEY)
     response = client.messages.create(

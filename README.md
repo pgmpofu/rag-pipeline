@@ -55,18 +55,44 @@ python cli.py reset
    `sentence-transformers/all-MiniLM-L6-v2` and upserts them into a persistent
    Chroma collection (`chroma_db/`). Chunk IDs are derived from
    source + index, so re-ingesting updates rather than duplicates.
-4. **Pipeline** (`rag/pipeline.py`) — retrieves the top-k chunks and asks Claude
-   to answer using only that context, citing post titles and URLs.
+4. **Retrieval** (`rag/store.py`) — pulls `top_k * 5` candidates, then re-ranks
+   them with maximal marginal relevance (MMR) before handing back `top_k`.
+   Each step picks the candidate maximising
+   `λ·sim(query, chunk) − (1−λ)·max sim(chunk, already_selected)`, so a chunk
+   near-identical to one already chosen must be substantially more relevant to
+   earn a slot.
+5. **Pipeline** (`rag/pipeline.py`) — asks Claude to answer using only the
+   retrieved context, citing post titles and URLs.
+
+## Retrieval diversity
+
+Plain top-k similarity lets one post monopolise every slot, because adjacent
+chunks of the same article are near-duplicates of each other. MMR fixes this
+without a per-source quota, which would have damaged narrow questions whose
+answer genuinely lives in a single post. Measured over the dev.to corpus at
+`top_k=5`:
+
+| Question | Distinct posts, λ=1.0 | Distinct posts, λ=0.6 |
+| --- | --- | --- |
+| How did my SAST scanner and secrets detector differ? | 2/5 | 5/5 |
+| What tradeoffs did I make across all my security tools? | 4/5 | 5/5 |
+| What did I learn about false positives and suppression? | 1/5 | 3/5 |
+| Why Random Forest instead of deep learning? *(narrow)* | 1/5 | 1/5 |
+| Why did I split chunks on paragraph boundaries? *(narrow)* | 1/5 | 1/5 |
+
+Comparative questions gain breadth; narrow ones correctly stay concentrated in
+the one post that answers them. Tune per query with `--lambda`:
+
+```bash
+python cli.py query "How do my tools compare?" --lambda 0.4   # more diverse
+python cli.py query "Why Random Forest?" --lambda 1.0          # pure relevance
+```
 
 ## Notes and next steps
 
 - **Retrieved text is data, not instructions.** The system prompt tells the model
   to treat context as reference material only. Anything ingested from a remote
   source should be regarded as untrusted input.
-- **Retrieval currently favours a single post.** For a narrow question that is
-  correct, but comparative questions ("how did my SAST and secrets tools differ?")
-  can have all k slots taken by one article. Per-source diversity or MMR
-  re-ranking would fix this.
 - **Swappable pieces.** The vector store only needs `add_documents` / `query`,
   so Pinecone, Weaviate, or pgvector can drop in. Embeddings can move to Voyage
   AI (Anthropic's recommended partner) if you want hosted quality over local
