@@ -1,7 +1,9 @@
 import hashlib
+from collections import Counter
 
 import chromadb
 import numpy as np
+from chromadb.errors import NotFoundError
 from chromadb.utils import embedding_functions
 
 from .config import (
@@ -57,6 +59,19 @@ def add_documents(documents: list[dict]) -> int:
             for d in documents
         ],
     )
+
+    # Upsert alone leaves the tail behind when a source is re-ingested with
+    # fewer chunks than before, so those orphans keep serving deleted text.
+    for source, chunk_count in Counter(d["source"] for d in documents).items():
+        collection.delete(
+            where={
+                "$and": [
+                    {"source": {"$eq": source}},
+                    {"chunk_index": {"$gte": chunk_count}},
+                ]
+            }
+        )
+
     return len(documents)
 
 
@@ -150,6 +165,10 @@ def count() -> int:
 
 
 def reset():
+    """Drop the collection. Safe to call when it does not exist."""
     global _collection
-    chromadb.PersistentClient(path=PERSIST_DIR).delete_collection(COLLECTION_NAME)
+    try:
+        chromadb.PersistentClient(path=PERSIST_DIR).delete_collection(COLLECTION_NAME)
+    except NotFoundError:
+        pass
     _collection = None

@@ -1,9 +1,11 @@
 import argparse
 from pathlib import Path
 
-from rag import devto, pipeline, store
-from rag.config import MMR_LAMBDA
+from rag import devto, evaluate, pipeline, store
+from rag.config import MMR_LAMBDA, TOP_K
 from rag.loader import load_and_chunk
+
+LAMBDA_SWEEP = [0.2, 0.4, 0.6, 0.8, 1.0]
 
 
 def cmd_ingest(args):
@@ -33,6 +35,15 @@ def cmd_reset(args):
     print("Cleared the collection")
 
 
+def cmd_eval(args):
+    questions = evaluate.load_questions()
+    if args.sweep:
+        print(evaluate.format_sweep(evaluate.sweep(questions, LAMBDA_SWEEP, top_k=args.top_k)))
+    else:
+        report = evaluate.evaluate(questions, top_k=args.top_k, lambda_mult=args.lambda_mult)
+        print(evaluate.format_report(report, verbose=args.verbose))
+
+
 def main():
     parser = argparse.ArgumentParser(description="Local RAG pipeline")
     subparsers = parser.add_subparsers(required=True)
@@ -59,6 +70,15 @@ def main():
 
     reset_parser = subparsers.add_parser("reset", help="Delete everything in the collection")
     reset_parser.set_defaults(func=cmd_reset)
+
+    eval_parser = subparsers.add_parser("eval", help="Score retrieval against the labelled set")
+    eval_parser.add_argument("--top-k", type=int, default=TOP_K)
+    eval_parser.add_argument("--lambda", dest="lambda_mult", type=float, default=MMR_LAMBDA)
+    eval_parser.add_argument(
+        "--sweep", action="store_true", help="Score across a range of lambda values"
+    )
+    eval_parser.add_argument("--verbose", action="store_true", help="Show every question's rank")
+    eval_parser.set_defaults(func=cmd_eval)
 
     args = parser.parse_args()
     args.func(args)

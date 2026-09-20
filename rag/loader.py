@@ -22,24 +22,48 @@ def discover_files(source: Path) -> list[Path]:
     )
 
 
-def chunk_text(text: str, chunk_size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP) -> list[str]:
-    paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
+def _overlap_tail(chunk: str, overlap: int) -> str:
+    """The trailing slice of a chunk to repeat at the start of the next one."""
+    if overlap <= 0 or not chunk:
+        return ""
 
-    chunks = []
+    tail = chunk[-overlap:]
+    # Snap forward to a word boundary so the repeat never starts mid-word.
+    space = tail.find(" ")
+    return tail[space + 1 :].strip() if space != -1 else tail.strip()
+
+
+def chunk_text(text: str, chunk_size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP) -> list[str]:
+    """Split text into chunks of at most chunk_size, each repeating roughly
+    `overlap` characters of the previous one.
+
+    The overlap matters because a sentence that falls across a boundary is
+    otherwise retrievable from neither side.
+    """
+    overlap = max(0, min(overlap, chunk_size // 2))
+    # Leave room for the repeated tail plus the "\n\n" joining it to the body.
+    budget = chunk_size - overlap - 2
+
+    blocks: list[str] = []
+    for para in (p.strip() for p in text.split("\n\n")):
+        if not para:
+            continue
+        if len(para) <= budget:
+            blocks.append(para)
+        else:
+            blocks.extend(para[i : i + budget] for i in range(0, len(para), budget))
+
+    chunks: list[str] = []
     current = ""
-    for para in paragraphs:
-        if len(current) + len(para) + 2 <= chunk_size:
-            current = f"{current}\n\n{para}" if current else para
+    for block in blocks:
+        candidate = f"{current}\n\n{block}" if current else block
+        if len(candidate) <= chunk_size:
+            current = candidate
             continue
 
-        if current:
-            chunks.append(current)
-        if len(para) <= chunk_size:
-            current = para
-        else:
-            for i in range(0, len(para), chunk_size - overlap):
-                chunks.append(para[i : i + chunk_size])
-            current = ""
+        chunks.append(current)
+        tail = _overlap_tail(current, overlap)
+        current = f"{tail}\n\n{block}" if tail else block
 
     if current:
         chunks.append(current)

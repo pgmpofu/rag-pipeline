@@ -1,0 +1,121 @@
+[
+  {
+    "question": "What could go wrong security-wise when feeding retrieved documents into a language model?",
+    "expected": ["Securing a RAG Pipeline — The Threats I Designed Against and the Ones I Didn't"]
+  },
+  {
+    "question": "Which database did I keep my vectors in locally, and what would I move to at scale?",
+    "expected": ["How I Used Chroma as a Local Vector Store — And What You'd Swap It for in Production"]
+  },
+  {
+    "question": "Should the embedding model run on my own machine or through a hosted service?",
+    "expected": ["Local Embeddings vs. API Embeddings — Why I Chose sentence-transformers"]
+  },
+  {
+    "question": "How large should each piece of a document be when preparing it for search?",
+    "expected": [
+      "Chunking Strategy: Why I Split on Paragraph Boundaries Instead of Token Count",
+      "I Built a RAG Pipeline From Scratch Without Using LangChain — Here's Every Decision I Made"
+    ]
+  },
+  {
+    "question": "Did I need a framework to wire retrieval and generation together, or did I do it by hand?",
+    "expected": ["I Built a RAG Pipeline From Scratch Without Using LangChain — Here's Every Decision I Made"]
+  },
+  {
+    "question": "How much did a language model actually help when fixing the flaws it reported?",
+    "expected": ["I Used AI to Help Remediate Vulnerabilities — Here's How Useful It Actually Was"]
+  },
+  {
+    "question": "How did I demonstrate with numbers that the codebase had become safer?",
+    "expected": ["Before and After: Measuring Security Posture Improvement With Real Metrics"]
+  },
+  {
+    "question": "Why did I dismiss a large share of what the commercial scanner told me to fix?",
+    "expected": ["Why I Suppressed 30% of Snyk's Recommendations"]
+  },
+  {
+    "question": "What happened when I pointed a commercial dependency scanner at old enterprise Java?",
+    "expected": [
+      "Running Snyk on Real Legacy Java Code — The Full Unfiltered Results",
+      "I Dusted Off a 6-Year-Old Java Project and Ran Snyk Against It — Here's What I Found"
+    ]
+  },
+  {
+    "question": "How do you bring an ageing Spring Boot service up to date without breaking it?",
+    "expected": ["Modernising a 6-Year-Old Spring Boot Project Without Breaking Everything"]
+  },
+  {
+    "question": "What turned up when I revisited a codebase I had not touched in years?",
+    "expected": [
+      "I Dusted Off a 6-Year-Old Java Project and Ran Snyk Against It — Here's What I Found",
+      "Running Snyk on Real Legacy Java Code — The Full Unfiltered Results"
+    ]
+  },
+  {
+    "question": "What did my credential scanner turn up when I aimed it at my own code?",
+    "expected": ["I Ran My ML Secrets Detector Against My Own Repositories — Here's What It Found"]
+  },
+  {
+    "question": "How do I stop a developer committing an API key in the first place?",
+    "expected": ["Blocking Secrets Before They Hit the Repository: Building a Pre-Commit Hook With ML"]
+  },
+  {
+    "question": "How can you train a security classifier without collecting real leaked credentials?",
+    "expected": ["Training on Synthetic Data: How to Build an ML Security Tool Without Touching Real Leaked Secrets"]
+  },
+  {
+    "question": "Which algorithm did I pick for spotting credentials, and why not a neural network?",
+    "expected": ["Why I Chose Random Forest Over Deep Learning for Secrets Detection"]
+  },
+  {
+    "question": "Which single signal mattered most when deciding whether something is a credential?",
+    "expected": ["Why the Variable Name Is the Most Important Feature in Secrets Detection"]
+  },
+  {
+    "question": "What inputs does the classifier actually look at to make its decision?",
+    "expected": [
+      "The 26-Dimensional Feature Vector: How a Machine Learns to Recognise a Secret",
+      "Why the Variable Name Is the Most Important Feature in Secrets Detection"
+    ]
+  },
+  {
+    "question": "Why wasn't simple pattern matching good enough for finding credentials?",
+    "expected": ["Why I Built an ML-Powered Secrets Detector Instead of Just Using Regex"]
+  },
+  {
+    "question": "What did building a scanner teach me that years of shipping software hadn't?",
+    "expected": ["What Building a SAST Tool Taught Me About AppSec That 13 Years of Software Engineering Didn't"]
+  },
+  {
+    "question": "How do I keep a scanner from drowning developers in noise?",
+    "expected": ["False Positives in SAST — How I Built Suppression Into My Scanner and Why It Matters"]
+  },
+  {
+    "question": "Why do teams quietly abandon security tooling after rolling it out?",
+    "expected": ["The Adoption Trap to Avoid"]
+  },
+  {
+    "question": "How do I cover a vulnerability class my scanner ships no rule for?",
+    "expected": ["Writing Custom SAST Rules for Vulnerabilities Your Scanner Doesn't Cover"]
+  },
+  {
+    "question": "How did I encode a well-known vulnerability list as configuration?",
+    "expected": ["How I Modelled the OWASP Top 10 Into a YAML Rule Engine"]
+  },
+  {
+    "question": "Should a scanner parse source into a syntax tree or match text patterns?",
+    "expected": ["Why I Chose Regex Over AST Parsing in My SAST Tool (And When That Would Be Wrong)"]
+  },
+  {
+    "question": "What were the design tradeoffs when I wrote my own static analyser?",
+    "expected": [
+      "I Built a SAST Scanner From Scratch — Here's Every Design Decision I Made",
+      "I Built a SAST Scanner from Scratch and Ran It Against 4 Famous Vulnerable Apps — Here's What It Found"
+    ]
+  },
+  {
+    "question": "How did my scanner perform against deliberately insecure practice applications?",
+    "expected": ["I Built a SAST Scanner from Scratch and Ran It Against 4 Famous Vulnerable Apps — Here's What It Found"]
+  }
+]
